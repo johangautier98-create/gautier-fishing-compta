@@ -47,8 +47,3 @@ Si une info est introuvable mets "Non détecté".`
     return NextResponse.json({ error: 'Erreur analyse' }, { status: 500 })
   }
 }
-```
-
-**Ctrl+S** — ensuite on installe le package Anthropic. Dans le terminal **PowerShell** de VS Code tape :
-```
-npm install @anthropic-ai/sdk
