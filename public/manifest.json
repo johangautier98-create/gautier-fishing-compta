@@ -1,0 +1,21 @@
+{
+  "name": "Gautier Fishing Comptabilité",
+  "short_name": "G. Fishing",
+  "description": "Application de comptabilité Gautier Fishing",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a2535",
+  "theme_color": "#1a2535",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
