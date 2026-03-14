@@ -1,11 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const { image } = await req.json()
     const base64 = image.split(',')[1]
@@ -19,16 +19,20 @@ export async function POST(req: NextRequest) {
         content: [
           {
             type: 'image',
-            source: { type: 'base64', media_type: mediaType, data: base64 }
+            source: {
+              type: 'base64',
+              media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+              data: base64
+            }
           },
           {
             type: 'text',
-            text: `Analyse cette facture et réponds UNIQUEMENT en JSON valide sans aucun texte avant ou après, avec ces champs exactement:
+            text: `Analyse cette facture et réponds UNIQUEMENT en JSON valide sans aucun texte avant ou après:
 {
   "fournisseur": "nom du fournisseur",
   "date": "date au format JJ/MM/AAAA",
   "numero": "numéro de facture",
-  "categorie": "une de ces catégories: Emballage, Envois / Poste, Matériel, Publicité, Logiciels, Fournitures, Divers",
+  "categorie": "Emballage ou Envois / Poste ou Matériel ou Publicité ou Logiciels ou Fournitures ou Divers",
   "ht": "montant HT avec € ex: 63,00 €",
   "ttc": "montant TTC avec € ex: 76,00 €"
 }
@@ -44,6 +48,7 @@ Si une info est introuvable mets "Non détecté".`
     return NextResponse.json(data)
 
   } catch (e) {
+    console.error(e)
     return NextResponse.json({ error: 'Erreur analyse' }, { status: 500 })
   }
 }
