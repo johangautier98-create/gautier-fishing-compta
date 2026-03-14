@@ -178,10 +178,3 @@ export default function Home() {
     </div>
   )
 }
-```
-
-**Ctrl+S** puis dans Git Bash :
-```
-git add .
-git commit -m "mois cliquables et 2026"
-git push
