@@ -38,21 +38,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
 
         <div className="app-container">
-          
+
           {/* SIDEBAR DESKTOP */}
           <div className="sidebar">
-            <div style={{padding:'22px 18px 20px',borderBottom:'1px solid #2a3a50'}}>
-              <div style={{display:'flex',alignItems:'center',gap:11}}>
-                <div style={{width:40,height:40,background:'#2a4060',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3L5 9.5V20h5v-6h4v6h5V9.5L12 3z" fill="#a8d4f8"/></svg>
-                </div>
-                <div>
-                  <div style={{fontSize:14,fontWeight:600,color:'#fff'}}>
-                    <span style={{color:'#cc2020'}}>G</span>autier <span style={{color:'#5a9be0'}}>F</span>ishing
-                  </div>
-                  <span style={{color:'#6a8aaa',fontSize:10,textTransform:'uppercase',letterSpacing:'.1em',marginTop:3,display:'block'}}>Comptabilité</span>
-                </div>
-              </div>
+            <div style={{padding:'16px 18px 16px',borderBottom:'1px solid #2a3a50',textAlign:'center'}}>
+              <img
+                src="/icon.png"
+                alt="Gautier Fishing"
+                style={{width:120,height:120,objectFit:'contain'}}
+              />
+              <div style={{color:'#6a8aaa',fontSize:10,textTransform:'uppercase',letterSpacing:'.1em',marginTop:4}}>Comptabilité</div>
             </div>
             <div style={{padding:'10px 0',flex:1}}>
               <div style={{fontSize:10,color:'#4a6070',textTransform:'uppercase',letterSpacing:'.1em',padding:'12px 18px 4px'}}>Principal</div>
@@ -80,11 +75,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* HEADER MOBILE */}
           <div className="mobile-header">
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{width:32,height:32,background:'#2a4060',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3L5 9.5V20h5v-6h4v6h5V9.5L12 3z" fill="#a8d4f8"/></svg>
-              </div>
+              <img src="/icon.png" alt="Gautier Fishing" style={{width:36,height:36,objectFit:'contain'}}/>
               <div>
-                <div style={{fontSize:13,fontWeight:600,color:'#fff'}}><span style={{color:'#cc2020'}}>G</span>autier <span style={{color:'#5a9be0'}}>F</span>ishing</div>
+                <div style={{fontSize:13,fontWeight:600,color:'#fff'}}>Gautier Fishing</div>
                 <div style={{fontSize:9,color:'#6a8aaa',textTransform:'uppercase',letterSpacing:'.1em'}}>Comptabilité</div>
               </div>
             </div>
