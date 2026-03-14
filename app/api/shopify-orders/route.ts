@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server'
 
+async function safeJson(res: Response) {
+  const text = await res.text()
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(
+      `Réponse non JSON reçue (status ${res.status}). Début: ${text.slice(0, 180)}`
+    )
+  }
+}
+
 async function getAdminAccessToken() {
   const clientId = process.env.SHOPIFY_CLIENT_ID
   const clientSecret = process.env.SHOPIFY_CLIENT_SECRET
@@ -13,18 +25,25 @@ async function getAdminAccessToken() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify({
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: 'client_credentials',
     }),
+    cache: 'no-store',
   })
 
-  const tokenData = await tokenRes.json()
+  const tokenData = await safeJson(tokenRes)
 
   if (!tokenRes.ok || !tokenData?.access_token) {
-    throw new Error(tokenData?.error || 'Impossible d’obtenir le token Admin API.')
+    throw new Error(
+      tokenData?.error_description ||
+      tokenData?.error ||
+      JSON.stringify(tokenData) ||
+      'Impossible d’obtenir le token Admin API.'
+    )
   }
 
   return tokenData.access_token as string
@@ -73,16 +92,18 @@ export async function GET() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ query }),
+      cache: 'no-store',
     })
 
-    const data = await res.json()
+    const data = await safeJson(res)
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: data?.errors || 'Erreur Shopify GraphQL.' },
+        { error: data?.errors || data || 'Erreur Shopify GraphQL.' },
         { status: res.status }
       )
     }
