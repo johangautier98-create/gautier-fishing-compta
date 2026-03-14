@@ -2,53 +2,209 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 
 const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+  apiKey: process.env.ANTHROPIC_API_KEY,
 })
+
+type FactureData = {
+  fournisseur: string
+  date: string
+  numero: string
+  categorie: string
+  ht: string
+  ttc: string
+}
+
+const EMPTY_RESULT: FactureData = {
+  fournisseur: 'Non détecté',
+  date: 'Non détecté',
+  numero: 'Non détecté',
+  categorie: 'Divers',
+  ht: 'Non détecté',
+  ttc: 'Non détecté',
+}
+
+function extractJsonObject(text: string): string | null {
+  const cleaned = text.replace(/```json|```/gi, '').trim()
+
+  const firstBrace = cleaned.indexOf('{')
+  const lastBrace = cleaned.lastIndexOf('}')
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    return null
+  }
+
+  return cleaned.slice(firstBrace, lastBrace + 1)
+}
+
+function normalizeCategorie(value: unknown): string {
+  const raw = String(value || '').trim().toLowerCase()
+
+  const map: Record<string, string> = {
+    emballage: 'Emballage',
+    'envois / poste': 'Envois / Poste',
+    envois: 'Envois / Poste',
+    poste: 'Envois / Poste',
+    matériel: 'Matériel',
+    materiel: 'Matériel',
+    publicité: 'Publicité',
+    publicite: 'Publicité',
+    logiciel: 'Logiciel',
+    logiciels: 'Logiciel',
+    fournitures: 'Fournitures',
+    divers: 'Divers',
+  }
+
+  return map[raw] || 'Divers'
+}
+
+function normalizeResult(data: any): FactureData {
+  return {
+    fournisseur: data?.fournisseur ? String(data.fournisseur) : 'Non détecté',
+    date: data?.date ? String(data.date) : 'Non détecté',
+    numero: data?.numero ? String(data.numero) : 'Non détecté',
+    categorie: normalizeCategorie(data?.categorie),
+    ht: data?.ht ? String(data.ht) : 'Non détecté',
+    ttc: data?.ttc ? String(data.ttc) : 'Non détecté',
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const { image } = await req.json()
-    const base64 = image.split(',')[1]
-    const mediaType = image.split(';')[0].split(':')[1]
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { error: 'Clé API Anthropic manquante dans les variables Vercel.' },
+        { status: 500 }
+      )
+    }
+
+    const body = await req.json()
+    const image = body?.image
+
+    if (!image || typeof image !== 'string' || !image.startsWith('data:image/')) {
+      return NextResponse.json(
+        { error: 'Image invalide ou absente.' },
+        { status: 400 }
+      )
+    }
+
+    const parts = image.split(',')
+    if (parts.length < 2) {
+      return NextResponse.json(
+        { error: 'Format image base64 invalide.' },
+        { status: 400 }
+      )
+    }
+
+    const base64 = parts[1]
+    const mediaType = image.split(';')[0].split(':')[1] as
+      | 'image/jpeg'
+      | 'image/png'
+      | 'image/gif'
+      | 'image/webp'
+
+    const allowedMediaTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedMediaTypes.includes(mediaType)) {
+      return NextResponse.json(
+        { error: `Type de fichier non supporté: ${mediaType}` },
+        { status: 400 }
+      )
+    }
 
     const response = await client.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-              data: base64
-            }
-          },
-          {
-            type: 'text',
-            text: `Analyse cette facture et réponds UNIQUEMENT en JSON valide sans aucun texte avant ou après:
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: base64,
+              },
+            },
+            {
+              type: 'text',
+              text: `
+Analyse cette facture.
+Réponds avec UN SEUL objet JSON valide, sans texte avant ou après.
+
+Format attendu :
 {
   "fournisseur": "nom du fournisseur",
   "date": "date au format JJ/MM/AAAA",
   "numero": "numéro de facture",
-  "categorie": "Emballage ou Envois / Poste ou Matériel ou Publicité ou Logiciels ou Fournitures ou Divers",
+  "categorie": "Emballage ou Envois / Poste ou Matériel ou Publicité ou Logiciel ou Fournitures ou Divers",
   "ht": "montant HT avec € ex: 63,00 €",
   "ttc": "montant TTC avec € ex: 76,00 €"
 }
-Si une info est introuvable mets "Non détecté".`
-          }
-        ]
-      }]
+
+Règles :
+- Si une information est introuvable, mets "Non détecté"
+- N'invente rien
+- Retourne uniquement le JSON
+              `.trim(),
+            },
+          ],
+        },
+      ],
     })
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : ''
-    const clean = text.replace(/```json|```/g, '').trim()
-    const data = JSON.parse(clean)
-    return NextResponse.json(data)
+    const textBlocks = response.content
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
 
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: 'Erreur analyse' }, { status: 500 })
+    const rawText = textBlocks.join('\n').trim()
+
+    if (!rawText) {
+      return NextResponse.json(
+        { error: 'Réponse vide du modèle.' },
+        { status: 500 }
+      )
+    }
+
+    const jsonText = extractJsonObject(rawText)
+
+    if (!jsonText) {
+      return NextResponse.json(
+        {
+          error: 'Impossible d’extraire un JSON valide depuis la réponse IA.',
+          raw: rawText,
+        },
+        { status: 500 }
+      )
+    }
+
+    let parsed: any
+    try {
+      parsed = JSON.parse(jsonText)
+    } catch {
+      return NextResponse.json(
+        {
+          error: 'Le JSON retourné par l’IA est invalide.',
+          raw: rawText,
+        },
+        { status: 500 }
+      )
+    }
+
+    const normalized = normalizeResult(parsed)
+
+    return NextResponse.json(normalized)
+  } catch (error: any) {
+    console.error('Erreur analyse facture:', error)
+
+    const message =
+      error?.message ||
+      error?.error?.message ||
+      'Erreur inconnue lors de l’analyse.'
+
+    return NextResponse.json(
+      { error: message, fallback: EMPTY_RESULT },
+      { status: 500 }
+    )
   }
 }
