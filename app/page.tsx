@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const MOIS = ['Jan','Fév','Mars','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc','T1','T2','T3','T4','Annuel']
 
@@ -24,6 +25,7 @@ const DATA: Record<string, any> = {
 }
 
 export default function Home() {
+  const router = useRouter()
   const [moisSel, setMoisSel] = useState('Mars')
   const [annee, setAnnee] = useState('2025')
   const d = DATA[moisSel] || DATA['Mars']
@@ -35,7 +37,7 @@ export default function Home() {
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16}}>
           <div style={{fontSize:22,fontWeight:500,color:'#1a2e40'}}>Tableau de bord</div>
           <button
-            onClick={()=>window.location.href='/facture'}
+            onClick={()=>router.push('/facture')}
             style={{background:'#1a2535',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontSize:13,cursor:'pointer',fontWeight:500}}
           >
             + Ajouter une facture
@@ -109,7 +111,7 @@ export default function Home() {
           <div style={{width:7,height:7,borderRadius:'50%',background:'#d4a010',flexShrink:0}}/>
           3 factures à vérifier — doublons ou fournisseurs non identifiés détectés automatiquement.
           <span
-            onClick={()=>window.location.href='/depenses'}
+            onClick={()=>router.push('/depenses')}
             style={{marginLeft:'auto',fontSize:12,color:'#3d7aad',cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}
           >
             Voir →
@@ -122,7 +124,7 @@ export default function Home() {
             <div style={{fontSize:11,fontWeight:500,color:'#4a6a85',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               Dernières opérations
               <span
-                onClick={()=>window.location.href='/ventes'}
+                onClick={()=>router.push('/ventes')}
                 style={{fontSize:12,color:'#3d7aad',textTransform:'none',fontWeight:400,cursor:'pointer'}}
               >
                 Tout afficher →
@@ -162,7 +164,7 @@ export default function Home() {
             <div style={{background:'#fff',border:'0.5px solid #dde8f0',borderRadius:12,padding:18}}>
               <div style={{fontSize:11,fontWeight:500,color:'#4a6a85',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 Dépenses par catégorie
-                <span onClick={()=>window.location.href='/depenses'} style={{fontSize:11,color:'#3d7aad',cursor:'pointer',fontWeight:400,textTransform:'none'}}>Voir →</span>
+                <span onClick={()=>router.push('/depenses')} style={{fontSize:11,color:'#3d7aad',cursor:'pointer',fontWeight:400,textTransform:'none'}}>Voir →</span>
               </div>
               {[['Emballage','420 €'],['Envois','310 €'],['Publicité','280 €'],['Logiciels','190 €'],['Divers','180 €']].map(([nom,amt])=>(
                 <div key={nom} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'0.5px solid #f0f4f8'}}>
