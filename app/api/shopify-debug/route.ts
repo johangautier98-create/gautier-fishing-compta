@@ -1,6 +1,11 @@
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const shop = searchParams.get("shop");
+
   return Response.json({
     ok: true,
-    message: "API Shopify debug fonctionne sur Vercel"
-  })
+    route: "shopify-debug",
+    shop,
+    message: "Route debug Shopify OK"
+  });
 }
