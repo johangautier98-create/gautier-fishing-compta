@@ -1,45 +1,24 @@
-import { NextResponse } from 'next/server'
-import crypto from 'crypto'
+import { NextResponse } from "next/server";
 
-export async function GET() {
-  const shop = process.env.SHOPIFY_STORE_DOMAIN
-  const clientId = process.env.SHOPIFY_CLIENT_ID
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const shop = searchParams.get("shop");
 
-  if (!shop || !clientId) {
-    return NextResponse.json(
-      { error: 'Variables Shopify manquantes.' },
-      { status: 500 }
-    )
+  if (!shop) {
+    return NextResponse.json({ error: "Paramètre shop manquant." }, { status: 400 });
   }
 
-  const redirectUri =
-    'https://gautier-fishing-compta.vercel.app/api/shopify/callback'
+  const clientId = process.env.SHOPIFY_CLIENT_ID;
+  const redirectUri = "https://gautier-fishing-compta.vercel.app/api/shopify/callback";
+  const scopes = "read_customers,read_fulfillments,read_inventory,read_orders,read_products";
+  const state = "test123";
 
-  const scopes = [
-    'read_orders',
-    'read_customers',
-    'read_products',
-    'read_inventory',
-    'read_fulfillments',
-  ].join(',')
-
-  const state = crypto.randomUUID()
-
-  const authUrl =
+  const installUrl =
     `https://${shop}/admin/oauth/authorize` +
-    `?client_id=${encodeURIComponent(clientId)}` +
+    `?client_id=${clientId}` +
     `&scope=${encodeURIComponent(scopes)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&state=${encodeURIComponent(state)}`
+    `&state=${state}`;
 
-  const response = NextResponse.redirect(authUrl)
-  response.cookies.set('shopify_oauth_state', state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 10,
-  })
-
-  return response
+  return NextResponse.redirect(installUrl);
 }
